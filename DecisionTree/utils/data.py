@@ -1,5 +1,5 @@
 import numpy as np
-import pandas a pd
+import pandas as pd
 
 
 def get_attributes_and_labels(filename):
@@ -33,7 +33,7 @@ def create_dataframe(filename):
             for i in range(len(row)):
                 data.get(data_keys[i]).append(row[i])
 
-    return pd.data
+    return pd.DataFrame(data)
 
 
 def filter_dataframe(dataframe, column, value):
