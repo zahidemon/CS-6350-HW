@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 from DecisionTree.id3 import DecisionTree
 from DecisionTree.utils.data import get_attributes_and_labels, apply_thresholding
@@ -92,3 +93,14 @@ if __name__ == "__main__":
         adaboost_training_errors.append(training_error)
         adaboost_testing_errors.append(testing_error)
         adaboost_file.write(f"{i}\t {training_error}\t {testing_error}\n")
+
+    fig1 = plt.figure(1)
+    ax2 = plt.axes()
+    ax2.plot(range(1, number_of_iterations), adaboost_training_errors, c='b', label='Train Error')
+    ax2.plot(range(1, number_of_iterations), adaboost_testing_errors, c='r', label='Test Error')
+    ax2.set_title("Random Forest, Feature Subset Size = 2")
+    plt.xlabel('Iteration', fontsize=18)
+    plt.ylabel('Error Rate', fontsize=16)
+    plt.legend(['train', 'test'])
+    plt.savefig("adaboost.png")
+    plt.show()
