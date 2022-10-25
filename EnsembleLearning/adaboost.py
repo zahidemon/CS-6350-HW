@@ -96,8 +96,8 @@ if __name__ == "__main__":
 
     fig1 = plt.figure(1)
     ax2 = plt.axes()
-    ax2.plot(range(1, number_of_iterations), adaboost_training_errors, c='b', label='Train Error')
-    ax2.plot(range(1, number_of_iterations), adaboost_testing_errors, c='r', label='Test Error')
+    ax2.plot(list(range(1, number_of_iterations))*2, adaboost_training_errors, c='b', label='Train Error')
+    ax2.plot(list(range(1, number_of_iterations))*2, adaboost_testing_errors, c='r', label='Test Error')
     ax2.set_title("Random Forest, Feature Subset Size = 2")
     plt.xlabel('Iteration', fontsize=18)
     plt.ylabel('Error Rate', fontsize=16)

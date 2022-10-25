@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     print("Bank Dataset Evaluation (with unknown considered as value):")
     T = 500
-    x = range(1, T + 1)
+    x = list(range(1, T + 1))*2
 
     rf_2 = RandomForest(preprocessed_bank_train_df, preprocessed_bank_test_df,
                         list(preprocessed_bank_train_df.columns[:-1]),

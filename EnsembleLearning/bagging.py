@@ -81,11 +81,11 @@ if __name__ == "__main__":
     number_of_trees = 500
     bgt = Bagging(all_train, all_test, columns[-1], y_train, 100, number_of_trees)
 
-    fig2 = plt.figure(2)
-    ax2 = plt.axes()
-    ax2.plot(range(1, number_of_trees + 1), bgt.train_error, c='b', label='Training Error')
-    ax2.plot(range(1, number_of_trees + 1), bgt.test_error, c='r', label='Testing Error')
-    ax2.set_title("Bagged Decision Tree")
+    fig1 = plt.figure(1)
+    ax1 = plt.axes()
+    ax1.plot(list(range(1, number_of_trees + 1))*2, bgt.train_error, c='b', label='Training Error')
+    ax1.plot(list(range(1, number_of_trees + 1))*2, bgt.test_error, c='r', label='Testing Error')
+    ax1.set_title("Bagged Decision Tree")
     plt.xlabel('Iteration', fontsize=18)
     plt.ylabel('Error Rate', fontsize=16)
     plt.legend(['train', 'test'])
