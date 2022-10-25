@@ -1,15 +1,60 @@
-import math
-
 import numpy as np
-import pandas as pd
 
 from DecisionTree.id3 import DecisionTree
 from DecisionTree.utils.data import get_attributes_and_labels, apply_thresholding
+
+
+class Adaboost:
+    def __init__(self, dataframe, features, labels, number_of_trees, test_x, test_y, impurity_type='entropy'):
+        self.dataframe = dataframe
+        self.features = features
+        self.labels = labels
+        self.max_depth = 2
+        self.number_of_trees = number_of_trees
+        self.impurity_type = impurity_type
+        self.test_x = test_x
+        self.test_y = test_y
+        self.stumps = []
+        self.stump_training_errors = []
+        self.stump_testing_errors = []
+        self.build_trees()
+
+    def build_trees(self, save_errors=True):
+        weights = np.ones(len(self.dataframe)) / len(self.dataframe)
+        for _ in range(self.number_of_trees):
+            stump = DecisionTree(self.dataframe, self.features, self.labels, self.max_depth, self.impurity_type)
+            predictions = stump.predictions(self.dataframe)
+            error = np.sum(weights[predictions != self.labels])
+            tree_weight = 0.5 * np.log((1 - error) / error)  # alpha_t
+            tmp = predictions.apply(lambda row: 1 if row == "yes" else -1).astype(float)
+            weights *= np.exp(-tree_weight * tmp)
+            weights /= np.sum(weights)
+            self.stumps.append((stump, tree_weight))
+
+            if save_errors:
+                self.stump_training_errors.append(stump.training_error("y"))
+                self.stump_testing_errors.append(stump.evaluate(self.test_x, self.test_y))
+
+    def predict(self, row):
+        return np.sign(np.sum([tree.predict(row) * weight for tree, weight in self.stumps]))
+
+    def predictions(self, data):
+        return data.apply(self.predict, axis=1)
+
+    def evaluate(self, data, label):
+        predictions = self.predictions(data)
+        return np.mean(predictions != data[label])
+
+    def training_error(self, label: str):
+        return self.evaluate(self.dataframe, label)
+
 
 if __name__ == "__main__":
     train_filename = "../Data/Bank/train.csv"
     test_filename = "../Data/Bank/test.csv"
     adaboost_file = open("Adaboost_logs.txt", 'w')
+    adaboost_file.write("iteration\t training_error\t testing_error\n")
+
     columns = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan', 'contact',
                'day', 'month', 'duration', 'campaign', 'pdays', 'previous', 'poutcome', 'y']
     all_train, x_train, y_train = get_attributes_and_labels(filename=train_filename, columns=columns)
@@ -26,68 +71,24 @@ if __name__ == "__main__":
         threshold=all_test[non_categorical_columns].median(),
         columns=non_categorical_columns
     )
-
-    T = 1
-    train_size = len(all_train)
-    test_size = len(all_test)
-    alphas = [0 for x in range(T)]
-    weights = np.array([1 / train_size for x in range(train_size)])
-
-    training_error = [0 for x in range(T)]
-    test_error = [0 for x in range(T)]
-    train_error_overall = [0 for x in range(T)]
-    test_error_overall = [0 for x in range(T)]
-    train_y = np.array([0 for x in range(train_size)])
-    test_y = np.array([0 for x in range(train_size)])
-
-    for t in range(T):
-        decision_tree = DecisionTree(
-                dataframe=all_train,
-                attributes=x_train,
-                labels=y_train,
-                max_depth=1,
-                weights=pd.Series(weights),
-                impurity_type="weighted_entropy"
-            )
-        # training error
-        train_preds = decision_tree.predictions(all_train)
-        print(decision_tree.weighted_evaluate(all_train, columns[-1], weights))
-        # print(type(train_preds))
-        # print(train_preds)
-        # train_preds[train_preds == 'yes'] = 1
-        # train_preds[train_preds == 'no'] = 0
-        # err = 1 - train_preds.sum() / train_size
-        # training_error[t] = err
-        # #
-        # # # weighted error and alpha
-        # tmp = np.array(train_preds.tolist())
-        # w = weights[tmp == 0]
-        # err = np.sum(w)
-        # alpha = 0.5 * math.log((1 - err) / err)
-        # alphas[t] = alpha
-        # #
-        # # # updated weights
-        # weights = np.exp(tmp * -alpha) * weights
-        # total = np.sum(weights)
-        # weights = weights / total
-        # #
-        # # # testing error
-        # test_preds = decision_tree.predictions(all_test)
-        # test_preds[test_preds == 'yes'] = 1
-        # test_preds[test_preds == 'no'] = 0
-        # test_error[t] = 1 - test_preds.sum() / test_size
-        # #
-        # # # combined prediction so far
-        # # # train
-        # train_py = train_y + train_preds * alpha
-        # err = 1 - train_y.sum() / train_size
-        # train_error_overall[t] = err
-        # #
-        # # # test
-        # test_py = test_y + test_preds * alpha
-        # err = 1 - test_y.sum() / train_size
-        # test_error_overall[t] = err
-        #
-        # adaboost_file.write(f't: {t}, train_stump_err: {training_error[t]}, test_stump_err: {test_error[t]}, '
-        #                     f'train_overall_err: {train_error_overall[t]} test_overall_err: {test_error_overall[t]}\n')
-
+    y_train = y_train.apply(lambda row: 1 if row == "yes" else -1).astype(float)
+    all_train["y"] = y_train
+    y_test = y_test.apply(lambda row: 1 if row == "yes" else -1).astype(float)
+    all_test["y"] = y_test
+    number_of_iterations = 500
+    adaboost_training_errors = []
+    adaboost_testing_errors = []
+    for i in range(number_of_iterations):
+        boost_classifier = Adaboost(
+            dataframe=all_train,
+            number_of_trees=i,
+            features=x_train,
+            labels=y_train,
+            test_x=all_test,
+            test_y=columns[-1]
+        )
+        training_error = boost_classifier.training_error(columns[-1])
+        testing_error = boost_classifier.evaluate(all_test, columns[-1])
+        adaboost_training_errors.append(training_error)
+        adaboost_testing_errors.append(testing_error)
+        adaboost_file.write(f"{i}\t {training_error}\t {testing_error}\n")

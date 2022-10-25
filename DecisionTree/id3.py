@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import argparse
 
-from utils.data import get_attributes_and_labels, apply_thresholding, fill_missing_values
+from DecisionTree.utils.data import get_attributes_and_labels, apply_thresholding, fill_missing_values
 
 
 class DecisionTree:
